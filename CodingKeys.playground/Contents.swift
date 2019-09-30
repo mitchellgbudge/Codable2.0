@@ -21,16 +21,8 @@ struct Person: Codable {
         let heightString = try container.decode(String.self, forKey: .height)
         height = Int(heightString) ?? 0
         hairColor = try container.decode(String.self, forKey: .hairColor)
-        
-        var filmsContainer = try container.nestedUnkeyedContainer(forKey: .films)
-        var filmUrls: [URL] = []
-        while filmsContainer.isAtEnd == false {
-            let filmString = try filmsContainer.decode(String.self)
-            if let url = URL(string: filmString) {
-                filmUrls.append(url)
-            }
-        }
-        films = filmUrls
+        let filmStrings = try container.decode([String].self, forKey: .films)
+        films = filmStrings.compactMap { URL(string: $0) }
     }
     
 }
