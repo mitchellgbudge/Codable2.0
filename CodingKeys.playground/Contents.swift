@@ -1,33 +1,39 @@
 import Cocoa
 
-// https://swapi.co/api/people/1/
-
-struct Person: Codable {
+struct Pokemon: Codable {
     let name: String
-    let height: Int
-    let hairColor: String
-    let films: [URL]
+    let abilities: [String]
     
-    enum PersonKeys: String, CodingKey {
+    enum PokemonKeys: String, CodingKey {
         case name
-        case height
-        case hairColor = "hair_color"
-        case films
+        case abilities
+        
+        enum AbilityDescriptionKeys: String, CodingKey {
+            case ability
+            
+            enum AbilityKeys: String, CodingKey {
+                case name
+            }
+        }
     }
     
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: PersonKeys.self)
+        let container = try decoder.container(keyedBy: PokemonKeys.self)
         name = try container.decode(String.self, forKey: .name)
-        let heightString = try container.decode(String.self, forKey: .height)
-        height = Int(heightString) ?? 0
-        hairColor = try container.decode(String.self, forKey: .hairColor)
-        let filmStrings = try container.decode([String].self, forKey: .films)
-        films = filmStrings.compactMap { URL(string: $0) }
+        var abilitiesContainer = try container.nestedUnkeyedContainer(forKey: .abilities)
+        var abilityNames: [String] = []
+        while abilitiesContainer.isAtEnd == false {
+            let abilityDescriptionContainer = try abilitiesContainer.nestedContainer(keyedBy: PokemonKeys.AbilityDescriptionKeys.self)
+            let abilityContainer = try abilityDescriptionContainer.nestedContainer(keyedBy: PokemonKeys.AbilityDescriptionKeys.AbilityKeys.self, forKey: .ability)
+            let abilityName = try abilityContainer.decode(String.self, forKey: .name)
+            abilityNames.append(abilityName)
+        }
+        abilities = abilityNames
     }
     
 }
 
-let baseURL = URL(string: "https://swapi.co/api/people/1/")!
+let baseURL = URL(string: "https://pokeapi.co/api/v2/pokemon/4")!
 let data = try! Data(contentsOf: baseURL)
-let luke = try! JSONDecoder().decode(Person.self, from: data)
-print(luke)
+let charmander = try! JSONDecoder().decode(Pokemon.self, from: data)
+print(charmander)
